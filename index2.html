@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玄机命理</title>
+    <style>
+        /* [原有样式保持不变] */
+        .loading-indicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--ai-bubble);
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>玄机命理</h2>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <div class="message ai">
+                <div class="message-content">
+                    天机流转处，贵在知命顺天行，敢问缘主生于何年何月何日何时？天干地支定位，五行流转方显真机。
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="examples-container">
+                <div class="examples-grid">
+                    <div class="example-item" data-prompt="生辰：2000年农历十月初十丑时，性别：男，出生地：广东省广州市海珠区">
+                        <div class="example-title">生辰示例（点击填充）</div>
+                        <div class="example-description">点击自动填充标准格式</div>
+                    </div>
+                </div>
+            </div>
+            <div class="input-wrapper">
+                <textarea class="chat-input" id="chat-input" placeholder="请输入生辰信息（示例：2000年农历十月初十丑时）" rows="1"></textarea>
+                <button class="send-button" id="send-button" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-indicator" id="loading">🔮 天机推演中...</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const API_ENDPOINT = '/api/analyze'; // 替换为真实API地址
+            const MAX_RETRIES = 2;
+            let isProcessing = false;
+
+            // [原有DOM元素获取保持不变]
+
+            async function sendMessage() {
+                if (isProcessing) return;
+                
+                const message = chatInput.value.trim();
+                if (!validateBirthInfo(message)) {
+                    showError('请按格式输入完整生辰信息');
+                    return;
+                }
+
+                try {
+                    isProcessing = true;
+                    showLoading(true);
+                    
+                    // 添加用户消息
+                    addMessage(message, 'user');
+                    
+                    // 调用API
+                    const response = await fetchWithRetry(API_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            birth_info: message,
+                            analysis_type: 'full' 
+                        })
+                    }, MAX_RETRIES);
+
+                    if (!response.ok) throw new Error('天机难测');
+                    
+                    const data = await response.json();
+                    addAnalysisResult(data);
+
+                } catch (error) {
+                    console.error('推演失败:', error);
+                    addMessage(`天机暂不可窥：${error.message}`, 'ai');
+                } finally {
+                    resetInput();
+                    showLoading(false);
+                    isProcessing = false;
+                }
+            }
+
+            // 新版验证函数
+            function validateBirthInfo(input) {
+                const BIRTH_REGEX = /^\d{4}年(农历)?[正腊一二三四五六七八九十]{1,3}月[初十廿卅]{1,2}[一二三四五六七八九十]{1,2}日[子丑寅卯辰巳午未申酉戌亥]时/;
+                return BIRTH_REGEX.test(input);
+            }
+
+            // 智能分析结果处理
+            function addAnalysisResult(data) {
+                let analysisText = `【命盘分析】
+八字格局：${data.bazi_structure}
+五行强度：${data.five_elements}
+
+【大运走势】
+${data.fortune_trend}
+
+【近期建议】
+${data.suggestions}`;
+
+                addMessage(analysisText, 'ai');
+            }
+
+            // 带重试机制的请求
+            async function fetchWithRetry(url, options, retries) {
+                try {
+                    const response = await fetch(url, options);
+                    return response;
+                } catch (error) {
+                    if (retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        return fetchWithRetry(url, options, retries - 1);
+                    }
+                    throw error;
+                }
+            }
+
+            // 加载状态控制
+            function showLoading(show) {
+                document.getElementById('loading').style.display = show ? 'block' : 'none';
+            }
+
+            // [其他辅助函数保持不变]
+        });
+    </script>
+</body>
+</html>
