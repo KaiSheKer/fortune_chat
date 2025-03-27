@@ -196,64 +196,43 @@
         }
     </style>
 </head>
+<!-- 引用外部 JS 文件[1,3](@ref) -->
+<script src="scripts/script.js"></script>
 <body>
-    <div class="app-container">
-        <header class="header">
-            <h1>命理咨询助手</h1>
-        </header>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>生辰</h2>
+        </div>
         
-        <main class="chat-container">
-            <div class="messages" id="messages">
-                <div class="message assistant">
-                    <div class="avatar">
-                        <i class="fas fa-user-astronaut"></i>
-                    </div>
-                    <div class="content">
-                        <p>您好！请提供您的生辰八字、性别、出生地等信息，我将为您解读命理。</p>
-                        <p>例如：1990年8月15日 早上7点 男 北京</p>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message ai">
+                <div class="message-content">
+                    天机流转处，贵在知命顺天行，敢问缘主生于何年何月何日何时？天干地支定位，五行流转方显真机。
+                </div>
+            </div>
+            <!-- 消息会动态添加到这里 -->
+        </div>
+        
+        <div class="chat-input-container">
+            <!-- 示例提示区域 -->
+            <div class="examples-container">
+                <div class="examples-grid">
+                    <div class="example-item" data-prompt="生辰：2000年农历十月初十丑时，性别：男，出生地：广东省市广州市海珠区">
+                        <div class="example-title">生辰：2000年农历十月初十丑时，性别：男，出生地：广东省市广州市海珠区</div>
+                        <div class="example-description">生辰、性别、出生地</div>
                     </div>
                 </div>
             </div>
-        </main>
-        
-        <footer class="input-area">
-            <div class="input-container">
-                <textarea id="user-input" placeholder="输入您的生辰八字、性别、出生地..." rows="1"></textarea>
-                <button id="send-button" class="send-button">
-                    <i class="fas fa-paper-plane"></i>
+            <div class="input-wrapper">
+                <textarea class="chat-input" id="chat-input" placeholder="Send a message..." rows="1"></textarea>
+                <button class="send-button" id="send-button" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </button>
             </div>
-            <div class="disclaimer">
-                <p>免责声明：本服务仅供娱乐参考，不构成任何专业建议。</p>
-            </div>
-        </footer>
-    </div>
-
-    <div class="settings-panel" id="settings-panel">
-        <div class="settings-header">
-            <h2>设置</h2>
-            <button id="close-settings">×</button>
-        </div>
-        <div class="settings-content">
-            <div class="setting-item">
-                <label for="api-key">API密钥</label>
-                <input type="password" id="api-key" placeholder="输入您的API密钥">
-            </div>
-            <div class="setting-item">
-                <label for="api-endpoint">API端点</label>
-                <input type="text" id="api-endpoint" placeholder="https://api.openai.com/v1/chat/completions">
-            </div>
-            <div class="setting-item">
-                <label for="system-prompt">系统提示词</label>
-                <textarea id="system-prompt" rows="5" placeholder="输入系统提示词..."></textarea>
-            </div>
-            <button id="save-settings" class="save-button">保存设置</button>
         </div>
     </div>
-
-    <button id="settings-button" class="settings-button">
-        <i class="fas fa-cog"></i>
-    </button>
 
     <script src="script.js"></script>
 </body>
