@@ -368,11 +368,11 @@
             </div>
             <div class="settings-field">
                 <label for="api-endpoint">API端点</label>
-                <input type="text" id="api-endpoint" value="https://api.openai.com/v1/chat/completions">
+                <input type="text" id="api-endpoint" value="https://api.deepseek.com/v1">
             </div>
             <div class="settings-field">
                 <label for="api-model">模型</label>
-                <input type="text" id="api-model" value="gpt-3.5-turbo">
+                <input type="text" id="api-model" value="sk-cdad7bfde0174f749beee8a6a5d29de1">
             </div>
             <div class="settings-field">
                 <label for="system-prompt">系统提示词</label>
@@ -624,8 +624,8 @@
             
             resetSettings.addEventListener('click', function() {
                 document.getElementById('api-key').value = '';
-                document.getElementById('api-endpoint').value = 'https://api.openai.com/v1/chat/completions';
-                document.getElementById('api-model').value = 'gpt-3.5-turbo';
+                document.getElementById('api-endpoint').value = 'https://api.deepseek.com/v1';
+                document.getElementById('api-model').value = 'sk-cdad7bfde0174f749beee8a6a5d29de1';
                 document.getElementById('system-prompt').value = config.systemPrompt;
             });
             
