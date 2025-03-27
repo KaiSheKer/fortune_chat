@@ -234,6 +234,152 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chat-messages');
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            const promptButtons = document.querySelectorAll('.prompt-button');
+            const exampleItems = document.querySelectorAll('.example-item');
+            
+            // 自动调整输入框高度
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+                
+                // 启用/禁用发送按钮
+                sendButton.disabled = this.value.trim() === '';
+            });
+            
+            // 处理发送消息
+            function sendMessage() {
+                const message = chatInput.value.trim();
+                if (message === '') return;
+                
+                // 添加用户消息
+                addMessage(message, 'user');
+                
+                // 清空输入框并重置高度
+                chatInput.value = '';
+                chatInput.style.height = 'auto';
+                sendButton.disabled = true;
+                
+            }
+            
+            // 添加消息到聊天区域
+            function addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                messageContent.textContent = text;
+                
+                messageDiv.appendChild(messageContent);
+                chatMessages.appendChild(messageDiv);
+                
+                // 滚动到底部
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // 发送按钮点击事件
+            sendButton.addEventListener('click', sendMessage);
+            
+            // 按Enter发送消息（Shift+Enter换行）
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // 提示按钮点击事件
+            promptButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const promptText = this.getAttribute('data-prompt');
+                    chatInput.value = promptText;
+                    chatInput.focus();
+                    
+                    // 触发input事件以更新高度和启用发送按钮
+                    const event = new Event('input', {
+                        bubbles: true,
+                        cancelable: true,
+                    });
+                    chatInput.dispatchEvent(event);
+                    
+                    // 将光标移到文本末尾
+                    chatInput.setSelectionRange(promptText.length, promptText.length);
+                });
+            });
+            
+            // 示例项点击事件
+            exampleItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const promptText = this.getAttribute('data-prompt');
+                    chatInput.value = promptText;
+                    chatInput.focus();
+                    
+                    // 触发input事件以更新高度和启用发送按钮
+                    const event = new Event('input', {
+                        bubbles: true,
+                        cancelable: true,
+                    });
+                    chatInput.dispatchEvent(event);
+                    
+                    // 将光标移到文本末尾
+                    chatInput.setSelectionRange(promptText.length, promptText.length);
+                });
+            });
+            
+            // 添加自定义提示模板的功能
+            function addCustomPrompt(text, label) {
+                const promptsContainer = document.getElementById('prompt-buttons');
+                const newPrompt = document.createElement('button');
+                newPrompt.className = 'prompt-button';
+                newPrompt.setAttribute('data-prompt', text);
+                newPrompt.textContent = label;
+            
+                newPrompt.addEventListener('click', function() {
+                    chatInput.value = text; // 设置输入框内容
+                    sendMessage(); // 调用发送消息函数
+                });
+            
+                promptsContainer.appendChild(newPrompt);
+            }
+            
+            // 添加自定义示例项的功能
+            function addCustomExample(title, description, promptText) {
+                const examplesGrid = document.querySelector('.examples-grid');
+                const newExample = document.createElement('div');
+                newExample.className = 'example-item';
+                newExample.setAttribute('data-prompt', promptText);
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'example-title';
+                titleDiv.textContent = title;
+                
+                const descDiv = document.createElement('div');
+                descDiv.className = 'example-description';
+                descDiv.textContent = description;
+                
+                newExample.appendChild(titleDiv);
+                newExample.appendChild(descDiv);
+                
+                newExample.addEventListener('click', function() {
+                    chatInput.value = this.getAttribute('data-prompt');
+                    chatInput.focus();
+                    const event = new Event('input', {
+                        bubbles: true,
+                        cancelable: true,
+                    });
+                    chatInput.dispatchEvent(event);
+                    chatInput.setSelectionRange(promptText.length, promptText.length);
+                });
+                
+                examplesGrid.appendChild(newExample);
+            }
+            
+        });
+    </script>
 </body>
 </html>
