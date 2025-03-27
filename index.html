@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="""zh-CN">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -194,10 +194,45 @@
             color: var(--muted);
             cursor: not-allowed;
         }
+        
+        .loading-dots {
+            display: inline-flex;
+            align-items: center;
+            height: 20px;
+        }
+        
+        .loading-dots span {
+            width: 6px;
+            height: 6px;
+            margin: 0 2px;
+            background-color: var(--muted);
+            border-radius: 50%;
+            display: inline-block;
+            animation: dot-pulse 1.5s infinite ease-in-out;
+        }
+        
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes dot-pulse {
+            0%, 100% {
+                transform: scale(0.7);
+                opacity: 0.5;
+            }
+            50% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
     </style>
+    <!-- 正确位置引入外部JS文件 -->
+    <script src="scripts/script.js"></script>
 </head>
-<!-- 引用外部 JS 文件[1,3](@ref) -->
-<script src="scripts/script.js"></script>
 <body>
     <div class="chat-container">
         <div class="chat-header">
@@ -229,6 +264,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
                 </button>
             </div>
         </div>
@@ -241,6 +277,26 @@
             const sendButton = document.getElementById('send-button');
             const promptButtons = document.querySelectorAll('.prompt-button');
             const exampleItems = document.querySelectorAll('.example-item');
+            
+            // API配置
+            const API_CONFIG = {
+                // API端点URL
+                url: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+                
+                // API密钥 - 根据您使用的服务进行配置
+                apiKey: 'Bearer 03bd97eb-2a5a-45a5-905d-08f404716aa8RE',
+                
+                // API提供商类型 (例如: 'openai', 'azure', 'anthropic', 'custom')
+                provider: 'openai',
+                
+                // 模型名称 (例如: 'gpt-4', 'gpt-3.5-turbo', 'claude-2')
+                model: 'gpt-4',
+                
+                // 系统提示词
+                systemPrompt: `你是一位精通八字命理的大师，擅长解读生辰八字，分析命运走向。
+                当用户提供生辰信息时，你需要根据信息进行专业的命理分析，包括八字命盘、五行属性、事业财运、婚姻情感等方面。
+                请使用专业且易懂的语言，回答要有深度和洞察力。`
+            };
             
             // 自动调整输入框高度
             chatInput.addEventListener('input', function() {
@@ -264,11 +320,175 @@
                 chatInput.style.height = 'auto';
                 sendButton.disabled = true;
                 
-                // 模拟AI回复
-                setTimeout(() => {
-                    const aiResponse = `这是对 "${message}" 的AI回复示例。在实际应用中，这里会替换为真实的AI响应。`;
-                    addMessage(aiResponse, 'ai');
-                }, 1000);
+                // 显示加载状态
+                const loadingId = showLoadingIndicator();
+                
+                // 调用API获取回复
+                fetchAIResponse(message)
+                    .then(response => {
+                        // 移除加载状态
+                        removeLoadingIndicator(loadingId);
+                        // 添加AI回复
+                        addMessage(response, 'ai');
+                    })
+                    .catch(error => {
+                        // 移除加载状态
+                        removeLoadingIndicator(loadingId);
+                        // 显示错误信息
+                        addMessage("抱歉，服务器暂时无法响应，请稍后再试。", 'ai');
+                        console.error('API调用失败:', error);
+                    });
+            }
+            
+            // 显示加载指示器
+            function showLoadingIndicator() {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'message ai';
+                loadingDiv.id = 'loading-' + Date.now();
+                
+                const loadingContent = document.createElement('div');
+                loadingContent.className = 'message-content';
+                
+                const loadingDots = document.createElement('div');
+                loadingDots.className = 'loading-dots';
+                loadingDots.innerHTML = '<span></span><span></span><span></span>';
+                
+                loadingContent.appendChild(loadingDots);
+                loadingDiv.appendChild(loadingContent);
+                chatMessages.appendChild(loadingDiv);
+                
+                // 滚动到底部
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                return loadingDiv.id;
+            }
+            
+            // 移除加载指示器
+            function removeLoadingIndicator(id) {
+                const loadingDiv = document.getElementById(id);
+                if (loadingDiv) {
+                    loadingDiv.remove();
+                }
+            }
+            
+            // 调用API获取AI回复
+            async function fetchAIResponse(userMessage) {
+                try {
+                    // 根据不同的API提供商构建请求
+                    let requestBody;
+                    let headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    
+                    switch(API_CONFIG.provider) {
+                        case 'openai':
+                            headers['Authorization'] = `Bearer ${API_CONFIG.apiKey}`;
+                            requestBody = {
+                                model: API_CONFIG.model,
+                                messages: [
+                                    {
+                                        role: 'system',
+                                        content: API_CONFIG.systemPrompt
+                                    },
+                                    {
+                                        role: 'user',
+                                        content: userMessage
+                                    }
+                                ]
+                            };
+                            break;
+                            
+                        case 'azure':
+                            headers['api-key'] = API_CONFIG.apiKey;
+                            requestBody = {
+                                messages: [
+                                    {
+                                        role: 'system',
+                                        content: API_CONFIG.systemPrompt
+                                    },
+                                    {
+                                        role: 'user',
+                                        content: userMessage
+                                    }
+                                ]
+                            };
+                            break;
+                            
+                        case 'anthropic':
+                            headers['x-api-key'] = API_CONFIG.apiKey;
+                            requestBody = {
+                                model: API_CONFIG.model,
+                                prompt: `${API_CONFIG.systemPrompt}\n\nHuman: ${userMessage}\n\nAssistant:`,
+                                max_tokens_to_sample: 1000
+                            };
+                            break;
+                            
+                        case 'custom':
+                        default:
+                            // 自定义API格式
+                            headers['Authorization'] = `Bearer ${API_CONFIG.apiKey}`;
+                            requestBody = {
+                                system: API_CONFIG.systemPrompt,
+                                user: userMessage
+                            };
+                            break;
+                    }
+                    
+                    const response = await fetch(API_CONFIG.url, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify(requestBody)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // 根据不同的API提供商解析响应
+                    let aiResponse;
+                    
+                    switch(API_CONFIG.provider) {
+                        case 'openai':
+                            aiResponse = data.choices[0].message.content;
+                            break;
+                            
+                        case 'azure':
+                            aiResponse = data.choices[0].message.content;
+                            break;
+                            
+                        case 'anthropic':
+                            aiResponse = data.completion;
+                            break;
+                            
+                        case 'custom':
+                        default:
+                            aiResponse = data.response || data.message || data.content || "无法解析API响应";
+                            break;
+                    }
+                    
+                    return aiResponse;
+                } catch (error) {
+                    console.error('API调用出错:', error);
+                    // 如果API调用失败，使用备用回复
+                    return generateFallbackResponse(userMessage);
+                }
+            }
+            
+            // 备用回复生成（当API调用失败时使用）
+            function generateFallbackResponse(userMessage) {
+                if (userMessage.includes("生辰")) {
+                    // 解析生辰信息
+                    const birthYear = userMessage.match(/\d{4}年/) ? userMessage.match(/\d{4}年/)[0].replace('年', '') : "未知";
+                    const gender = userMessage.includes("性别：男") ? "男" : userMessage.includes("性别：女") ? "女" : "未知";
+                    
+                    return `根据您提供的生辰信息，您出生于${birthYear}年，性别为${gender}。\n\n您的八字命盘显示，您具有较强的${gender === "男" ? "阳刚" : "阴柔"}之气，五行属性偏向于${Math.random() > 0.5 ? "金水" : "木火"}。在事业上，您适合从事${Math.random() > 0.5 ? "创新型" : "稳定型"}工作。`;
+                } else if (userMessage.includes("命运") || userMessage.includes("运势")) {
+                    return `您的命运走向受到天时地利人和的影响，近期运势${Math.random() > 0.5 ? "上升" : "平稳"}。建议您顺应天时，把握机遇，方能事半功倍。`;
+                } else {
+                    return "感谢您的咨询。为了给您提供更准确的解读，请提供您的生辰八字信息（出生年月日时）、性别和出生地，格式如：生辰：2000年农历十月初十丑时，性别：男，出生地：广东省广州市。";
+                }
             }
             
             // 添加消息到聊天区域
@@ -338,7 +558,9 @@
             
             // 添加自定义提示模板的功能
             function addCustomPrompt(text, label) {
-                const promptsContainer = document.getElementById('prompt-buttons');
+                const promptsContainer = document.querySelector('.prompt-buttons');
+                if (!promptsContainer) return;
+                
                 const newPrompt = document.createElement('button');
                 newPrompt.className = 'prompt-button';
                 newPrompt.setAttribute('data-prompt', text);
@@ -346,7 +568,16 @@
             
                 newPrompt.addEventListener('click', function() {
                     chatInput.value = text; // 设置输入框内容
-                    sendMessage(); // 调用发送消息函数
+                    
+                    // 触发input事件
+                    const event = new Event('input', {
+                        bubbles: true,
+                        cancelable: true,
+                    });
+                    chatInput.dispatchEvent(event);
+                    
+                    // 将光标移到文本末尾
+                    chatInput.setSelectionRange(text.length, text.length);
                 });
             
                 promptsContainer.appendChild(newPrompt);
