@@ -1,11 +1,8 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const chatMessages = document.getElementById('chat-messages');
-    const userInput = document.getElementById('user-input');
-    const sendButton = document.getElementById('send-button');
-    
-    // 存储提示词模板，用于构造API请求
-    const promptTemplate = `
-    角色设定：你作为一名资深命理学家，熟读《三命通会》、《渊海子平》，《滴天髓征义》、《穷通宝鉴》和《子平真诠评注》等命理经典，请根据以下信息进行深度命盘解析：
+let config = {
+    apiKey: '',
+    apiEndpoint: 'https://api.deepseek.com/v1',
+    model: 'sk-cdad7bfde0174f749beee8a6a5d29de1',
+    systemPrompt: `请你作为一名资深命理学家，熟读《三命通会》、《渊海子平》，《滴天髓征义》、《穷通宝鉴》和《子平真诠评注》等命理经典，请根据以下信息进行深度命盘解析：
 【基础信息】
 • 生辰：[出生时间（具体到分钟）]，
 • 性别：[男/女]
@@ -22,98 +19,192 @@ document.addEventListener('DOMContentLoaded', function() {
 大运数的起法，以三天折合一岁计。根阳年生男、阴年生女顺行，阴年生男、阳年生女逆行。据出生日与上一个节气（逆行时）或下一个节气（顺行时）之间的天数来计算，然后根据阴阳顺逆的原则来确定大运的走向。
 
 【输出格式】
-用白话文分段论述，既有术语又能让人听懂。
-    `;
+用白话文分段论述，既有术语又能让人听懂。`
+};
+
+// 加载保存的配置
+function loadConfig() {
+    const savedConfig = localStorage.getItem('minglixConfig');
+    if (savedConfig) {
+        config = JSON.parse(savedConfig);
+        document.getElementById('api-key').value = config.apiKey || '';
+        document.getElementById('api-endpoint').value = config.apiEndpoint || '';
+        document.getElementById('system-prompt').value = config.systemPrompt || '';
+    } else {
+        document.getElementById('system-prompt').value = config.systemPrompt;
+        document.getElementById('api-endpoint').value = config.apiEndpoint;
+    }
+}
+
+// 保存配置
+function saveConfig() {
+    config.apiKey = document.getElementById('api-key').value;
+    config.apiEndpoint = document.getElementById('api-endpoint').value;
+    config.systemPrompt = document.getElementById('system-prompt').value;
+    localStorage.setItem('minglixConfig', JSON.stringify(config));
+    alert('设置已保存');
+    document.getElementById('settings-panel').classList.remove('active');
+}
+
+// 添加消息到聊天界面
+function addMessage(content, role) {
+    const messagesContainer = document.getElementById('messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
     
-    // 免费API接口信息 - 这里使用的是假设的接口，你需要替换成实际可用的免费API
-    // 调用AI API获取回复
-async function callAIAPI(userMessage) {
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'avatar';
+    
+    const iconElement = document.createElement('i');
+    iconElement.className = role === 'user' ? 'fas fa-user' : 'fas fa-user-astronaut';
+    avatarDiv.appendChild(iconElement);
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'content';
+    contentDiv.innerHTML = `<p>${content}</p>`;
+    
+    messageDiv.appendChild(avatarDiv);
+    messageDiv.appendChild(contentDiv);
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// 添加加载中的消息
+function addLoadingMessage() {
+    const messagesContainer = document.getElementById('messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message assistant loading';
+    messageDiv.id = 'loading-message';
+    
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'avatar';
+    
+    const iconElement = document.createElement('i');
+    iconElement.className = 'fas fa-user-astronaut';
+    avatarDiv.appendChild(iconElement);
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'content';
+    contentDiv.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+    
+    messageDiv.appendChild(avatarDiv);
+    messageDiv.appendChild(contentDiv);
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// 移除加载中的消息
+function removeLoadingMessage() {
+    const loadingMessage = document.getElementById('loading-message');
+    if (loadingMessage) {
+        loadingMessage.remove();
+    }
+}
+
+// 发送消息到API
+async function sendToAPI(userMessage) {
+    if (!config.apiKey) {
+        alert('请先在设置中配置API密钥');
+        document.getElementById('settings-panel').classList.add('active');
+        return;
+    }
+    
+    addLoadingMessage();
+    
+    const messages = [
+        { role: "system", content: config.systemPrompt },
+        { role: "user", content: userMessage }
+    ];
+    
     try {
-        const response = await fetch('https://api.deepseek.com/v1', {
+        const response = await fetch(config.apiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'sk-cdad7bfde0174f749beee8a6a5d29de1'  // 如果需要的话
+                'Authorization': `Bearer ${config.apiKey}`
             },
             body: JSON.stringify({
-                prompt: promptTemplate + "\n\n用户信息: " + userMessage,
-                max_tokens: 500,
+                model: config.model,
+                messages: messages,
                 temperature: 0.7
             })
         });
         
         const data = await response.json();
-        return data.choices[0].text.trim();
+        
+        if (data.error) {
+            removeLoadingMessage();
+            addMessage(`错误: ${data.error.message}`, 'assistant');
+            return;
+        }
+        
+        const assistantResponse = data.choices[0].message.content;
+        removeLoadingMessage();
+        addMessage(assistantResponse, 'assistant');
+        
     } catch (error) {
-        console.error('调用AI API时出错:', error);
-        return '抱歉，我暂时无法连接到命理系统，请稍后再试。';
+        removeLoadingMessage();
+        addMessage(`发生错误: ${error.message}`, 'assistant');
     }
 }
+
+// 处理发送消息
+function handleSendMessage() {
+    const userInput = document.getElementById('user-input');
+    const userMessage = userInput.value.trim();
     
-    // 当用户点击发送按钮或按下Enter键时
-    function sendMessage() {
-        const message = userInput.value.trim();
-        if (message === '') return;
-        
-        // 显示用户消息
-        displayMessage(message, 'user');
+    if (userMessage) {
+        addMessage(userMessage, 'user');
         userInput.value = '';
-        
-        // 显示"正在思考"的消息
-        const thinkingDiv = document.createElement('div');
-        thinkingDiv.className = 'message assistant';
-        thinkingDiv.textContent = '正在推算命理...';
-        chatMessages.appendChild(thinkingDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // 模拟API调用 - 在实际应用中，这里应该调用真实的AI API
-        setTimeout(function() {
-            // 移除"正在思考"的消息
-            chatMessages.removeChild(thinkingDiv);
-            
-            // 在真实应用中，这里应该是API返回的结果
-            const aiResponse = generateFakeResponse(message);
-            displayMessage(aiResponse, 'assistant');
-        }, 1500);
+        adjustTextareaHeight(userInput);
+        sendToAPI(userMessage);
     }
-    
-    // 显示消息到聊天界面
-    function displayMessage(message, sender) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
-        messageDiv.textContent = message;
-        chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// 调整文本框高度
+function adjustTextareaHeight(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = (textarea.scrollHeight) + 'px';
+    if (textarea.scrollHeight > 200) {
+        textarea.style.height = '200px';
+        textarea.style.overflowY = 'auto';
+    } else {
+        textarea.style.overflowY = 'hidden';
     }
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+    loadConfig();
     
-    // 模拟AI回复 - 在实际应用中，这应该替换为实际的API调用
-    function generateFakeResponse(userMessage) {
-        // 这只是一个简单的演示回复，实际应用中应该调用AI API
-        if (userMessage.includes('出生') || userMessage.includes('生日')) {
-            return "根据你提供的生辰信息，我看到你的八字中水木相生，但金气较弱。命主五行属水，个性灵活聪慧。今年财运尚可，事业上会有贵人相助。感情方面要注意沟通，避免口舌之争。健康需留意肺部和消化系统。";
-        } else if (userMessage.includes('婚姻') || userMessage.includes('感情')) {
-            return "你的感情线较为曲折，过去可能经历过波折。今年桃花运偏弱，已有伴侣的朋友需要增进沟通，单身者可能需要再等待一段时间。命中显示你适合晚婚，遇到的姻缘会较为稳定。";
-        } else if (userMessage.includes('事业') || userMessage.includes('工作')) {
-            return "命主事业宫有明显的贵人相助迹象，适合从事与人打交道的工作。今明两年是事业发展的关键期，建议把握机会，勇于尝试。财运方面需要稳健发展，不宜投机。";
-        } else {
-            return "我需要更多信息来为你解读命运。请告诉我你的出生年月日时辰，以及你想了解的具体方面（如事业、财运、感情等）。";
-        }
-    }
+    // 发送按钮事件
+    document.getElementById('send-button').addEventListener('click', handleSendMessage);
     
-    // 绑定发送按钮点击事件
-    sendButton.addEventListener('click', sendMessage);
-    
-    // 绑定输入框回车键事件
-    userInput.addEventListener('keypress', function(e) {
+    // 输入框回车发送
+    document.getElementById('user-input').addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            sendMessage();
+            handleSendMessage();
         }
     });
     
-    // 让输入框自动调整高度
-    userInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
+    // 输入框自动调整高度
+    document.getElementById('user-input').addEventListener('input', function() {
+        adjustTextareaHeight(this);
     });
+    
+    // 设置按钮事件
+    document.getElementById('settings-button').addEventListener('click', () => {
+        document.getElementById('settings-panel').classList.add('active');
+    });
+    
+    // 关闭设置面板
+    document.getElementById('close-settings').addEventListener('click', () => {
+        document.getElementById('settings-panel').classList.remove('active');
+    });
+    
+    // 保存设置
+    document.getElementById('save-settings').addEventListener('click', saveConfig);
 });
