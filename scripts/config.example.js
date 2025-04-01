@@ -1,8 +1,7 @@
 // API 配置示例
 const CONFIG = {
-    apiKey: 'your-api-key-here',
+    apiKey: 'sk-cdad7bfde0174f749beee8a6a5d29de1',
     apiEndpoint: 'https://api.deepseek.com/v1',
-    model: 'gpt-3.5-turbo',
     systemPrompt: `你作为一名资深命理学家，熟读《三命通会》、《渊海子平》，《滴天髓征义》、《穷通宝鉴》和《子平真诠评注》等命理经典，请根据以下信息进行深度命盘解析：
 【基础信息】
 • 生辰：[出生时间（具体到分钟）]，
