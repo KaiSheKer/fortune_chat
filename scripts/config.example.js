@@ -21,3 +21,6 @@ const CONFIG = {
 【输出格式】
 用白话文分段论述，既有术语又能让人听懂。`
 };
+
+// 导出配置
+window.CONFIG = CONFIG;
