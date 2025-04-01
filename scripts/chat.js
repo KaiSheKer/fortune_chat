@@ -96,11 +96,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // 格式化文本
+    function formatText(text) {
+        return text
+            .replace(/\n\n/g, '<br><br>') // 双换行转为段落
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // 加粗
+            .replace(/\*(.*?)\*/g, '<em>$1</em>') // 斜体
+            .replace(/# (.*?)\n/g, '<h2>$1</h2>') // 标题
+            .replace(/## (.*?)\n/g, '<h3>$1</h3>') // 二级标题
+            .replace(/### (.*?)\n/g, '<h4>$1</h4>') // 三级标题
+            .replace(/\n/g, '<br>'); // 单换行
+    }
+
     // 添加消息到聊天区域
     function addMessage(text, sender) {
         const message = document.createElement('div');
         message.className = `message ${sender}`;
-        message.innerHTML = `<div class="message-content">${text}</div>`;
+        const formattedText = sender === 'user' ? text : formatText(text);
+        message.innerHTML = `<div class="message-content">${formattedText}</div>`;
         chatMessages.appendChild(message);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
@@ -129,7 +142,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateThinkingMessage(id, text) {
         const message = document.getElementById(id);
         if (message) {
-            message.innerHTML = `<div class="message-content">${text}</div>`;
+            const formattedText = formatText(text);
+            message.innerHTML = `<div class="message-content">${formattedText}</div>`;
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
