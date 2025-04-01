@@ -92,6 +92,67 @@
             border-top: 1px solid var(--border);
         }
 
+        /* 示例提示区域样式 */
+        .examples-container {
+            margin-bottom: 16px;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .example-item {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .example-item:hover {
+            background-color: var(--border);
+        }
+
+        .example-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--foreground);
+        }
+
+        .example-description {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .prompt-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .prompt-button {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--foreground);
+            padding: 8px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .prompt-button:hover {
+            background-color: var(--border);
+        }
+
         .input-wrapper {
             display: flex;
             background-color: var(--input-bg);
@@ -150,6 +211,15 @@
         </div>
         
         <div class="chat-input-container">
+            <!-- 示例提示区域 -->
+            <div class="examples-container">
+                <div class="examples-grid">
+                    <div class="example-item" data-prompt="生辰：2000年农历十月初十丑时，性别：男，出生地：广东省市广州市海珠区">
+                        <div class="example-title">生辰：2000年农历十月初十丑时，性别：男，出生地：广东省市广州市海珠区</div>
+                        <div class="example-description">生辰、性别、出生地</div>
+                    </div>
+                </div>
+            </div>
             <div class="input-wrapper">
                 <textarea class="chat-input" id="chat-input" placeholder="请输入您的生辰八字（年月日时）、性别、出生地等信息..." rows="1"></textarea>
                 <button class="send-button" id="send-button" disabled>
@@ -162,7 +232,7 @@
         </div>
     </div>
 
-    <script src="scripts/config.js"></script>
-    <script src="scripts/chat.js"></script>
+    <!-- 使用 ES modules 加载脚本 -->
+    <script type="module" src="scripts/chat.js"></script>
 </body>
 </html>

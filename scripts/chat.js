@@ -1,3 +1,5 @@
+import { CONFIG } from './config.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
@@ -32,10 +34,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Authorization': `Bearer ${CONFIG.apiKey}`
                 },
                 body: JSON.stringify({
-                    model: CONFIG.model,
+                    model: "deepseek-chat",
                     messages: [
-                        { role: 'system', content: CONFIG.systemPrompt },
-                        { role: 'user', content: message }
+                        { role: "system", content: CONFIG.systemPrompt },
+                        { role: "user", content: message }
                     ],
                     temperature: 0.7
                 })
@@ -56,17 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const data = await response.json();
-
-            if (data.error) {
-                updateThinkingMessage(thinkingId, `错误: ${data.error.message || '未知错误'}`);
-                return;
-            }
-
-            if (!data.choices?.[0]?.message?.content) {
-                updateThinkingMessage(thinkingId, '错误: API返回了无效的响应格式');
-                return;
-            }
-
             const reply = data.choices[0].message.content;
             updateThinkingMessage(thinkingId, reply);
 
