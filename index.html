@@ -92,33 +92,33 @@
             border-top: 1px solid var(--border);
         }
 
-        /* 示例提示区域样式 */
+        /* 添加预设提示的样式 */
         .examples-container {
-            margin-bottom: 16px;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
         }
 
         .examples-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            display: flex;
             gap: 10px;
-            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 10px;
         }
 
         .example-item {
-            background-color: var(--input-bg);
-            border: 1px solid var(--border);
+            background: var(--ai-bubble);
+            padding: 10px;
             border-radius: 8px;
-            padding: 16px;
             cursor: pointer;
+            min-width: 200px;
             transition: background-color 0.2s;
         }
 
         .example-item:hover {
-            background-color: var(--border);
+            background: #363636;
         }
 
         .example-title {
-            font-weight: bold;
             font-size: 14px;
             margin-bottom: 4px;
             color: var(--foreground);
