@@ -39,39 +39,56 @@ document.addEventListener('DOMContentLoaded', function() {
         const thinkingId = addThinkingMessage();
 
         try {
+            console.log('Sending request to:', CONFIG.apiEndpoint + '/chat/completions');
+            const requestBody = {
+                model: "deepseek-chat",
+                messages: [
+                    { role: "system", content: CONFIG.systemPrompt },
+                    { role: "user", content: message }
+                ],
+                temperature: 0.7
+            };
+            console.log('Request body:', requestBody);
+
             const response = await fetch(CONFIG.apiEndpoint + '/chat/completions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${CONFIG.apiKey}`
                 },
-                body: JSON.stringify({
-                    model: "deepseek-chat",
-                    messages: [
-                        { role: "system", content: CONFIG.systemPrompt },
-                        { role: "user", content: message }
-                    ],
-                    temperature: 0.7
-                })
+                body: JSON.stringify(requestBody)
             });
+
+            console.log('Response status:', response.status);
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
 
             // 检查响应状态
             if (!response.ok) {
-                const errorText = await response.text();
                 let errorMessage = '请求失败';
                 try {
-                    const errorData = JSON.parse(errorText);
-                    errorMessage = errorData.error?.message || errorData.message || errorText;
+                    const errorData = JSON.parse(responseText);
+                    errorMessage = errorData.error?.message || errorData.message || responseText;
                 } catch {
-                    errorMessage = errorText || `HTTP错误: ${response.status}`;
+                    errorMessage = responseText || `HTTP错误: ${response.status}`;
                 }
+                console.error('API错误:', errorMessage);
                 updateThinkingMessage(thinkingId, `错误: ${errorMessage}`);
                 return;
             }
 
-            const data = await response.json();
-            const reply = data.choices[0].message.content;
-            updateThinkingMessage(thinkingId, reply);
+            try {
+                const data = JSON.parse(responseText);
+                console.log('Parsed response:', data);
+                if (!data.choices?.[0]?.message?.content) {
+                    throw new Error('API返回了无效的响应格式');
+                }
+                const reply = data.choices[0].message.content;
+                updateThinkingMessage(thinkingId, reply);
+            } catch (error) {
+                console.error('解析响应失败:', error);
+                updateThinkingMessage(thinkingId, `错误: 无法解析API响应 - ${error.message}`);
+            }
 
         } catch (error) {
             console.error('API调用错误:', error);
@@ -94,7 +111,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const message = document.createElement('div');
         message.className = 'message ai';
         message.id = id;
-        message.innerHTML = '<div class="thinking"><span></span><span></span><span></span></div>';
+        message.innerHTML = `
+            <div class="message-content">
+                <div class="loading-text">正在推算命盘...</div>
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>`;
         chatMessages.appendChild(message);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         return id;
