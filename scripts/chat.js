@@ -12,6 +12,18 @@ document.addEventListener('DOMContentLoaded', function() {
         sendButton.disabled = this.value.trim() === '';
     });
 
+    // 处理预设提示的点击
+    document.querySelectorAll('.example-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const prompt = this.dataset.prompt;
+            chatInput.value = prompt;
+            chatInput.style.height = 'auto';
+            chatInput.style.height = (chatInput.scrollHeight) + 'px';
+            sendButton.disabled = false;
+            chatInput.focus();
+        });
+    });
+
     // 发送消息
     async function sendMessage() {
         const message = chatInput.value.trim();
@@ -27,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const thinkingId = addThinkingMessage();
 
         try {
-            const response = await fetch(CONFIG.apiEndpoint, {
+            const response = await fetch(CONFIG.apiEndpoint + '/chat/completions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -104,6 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
     chatInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
+            if (!this.value.trim()) return;
             sendMessage();
         }
     });
