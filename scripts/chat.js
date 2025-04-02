@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatInput = document.getElementById('chat-input');
     const sendButton = document.getElementById('send-button');
 
+    // 添加欢迎消息
+    addMessage('敢问缘主生于何年何月何日何时？天干地支定位，五行流转方显真机。', 'ai');
+
     // 自动调整输入框高度
     chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
