@@ -115,10 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function addMessage(text, sender) {
         const message = document.createElement('div');
         message.className = `message ${sender}`;
-        const formattedText = sender === 'user' ? text : formatText(text);
-        message.innerHTML = `<div class="message-content">${formattedText}</div>`;
+        message.innerHTML = `<div class="message-content">${formatText(text)}</div>`;
         chatMessages.appendChild(message);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        requestAnimationFrame(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
     }
 
     // 添加思考中的消息
@@ -137,7 +138,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>`;
         chatMessages.appendChild(message);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        requestAnimationFrame(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
         return id;
     }
 
@@ -147,7 +150,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (message) {
             const formattedText = formatText(text);
             message.innerHTML = `<div class="message-content">${formattedText}</div>`;
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            requestAnimationFrame(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
         }
     }
 
