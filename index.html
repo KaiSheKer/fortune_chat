@@ -59,6 +59,7 @@
         /* 自定义滚动条样式 */
         .chat-messages::-webkit-scrollbar {
             width: 6px;
+            background: transparent;
         }
 
         .chat-messages::-webkit-scrollbar-track {
@@ -66,18 +67,17 @@
         }
 
         .chat-messages::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.2);
+            background: transparent;
             border-radius: 3px;
-            opacity: 0;
-            transition: opacity 0.2s;
+            transition: background-color 0.2s;
         }
 
         .chat-messages:hover::-webkit-scrollbar-thumb {
-            opacity: 1;
+            background: rgba(255, 255, 255, 0.2);
         }
 
-        .chat-messages::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(255, 255, 255, 0.3);
+        .chat-messages:hover::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .message {
