@@ -102,16 +102,14 @@
             content: "";
         }
 
-        .user .message-content {
+        .message.user .message-content {
             background-color: var(--user-bubble);
-            color: white;
-            border-bottom-right-radius: 4px;
+            color: var(--foreground);
         }
 
-        .ai .message-content {
+        .message.ai .message-content {
             background-color: var(--ai-bubble);
             color: var(--foreground);
-            border-bottom-left-radius: 4px;
         }
 
         .chat-input-container {
@@ -253,9 +251,8 @@
             color: var(--muted);
         }
 
-        /* 加载动画样式 */
+        /* 加载状态样式 */
         .loading-text {
-            color: var(--foreground);
             font-size: 14px;
             margin-bottom: 8px;
         }
@@ -263,33 +260,29 @@
         .loading-dots {
             display: flex;
             gap: 4px;
+            height: 8px;
             align-items: center;
         }
 
         .loading-dots span {
-            width: 4px;
-            height: 4px;
-            background: var(--foreground);
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            animation: pulse 1.5s infinite;
-            opacity: 0.3;
+            background-color: var(--muted);
+            animation: loading 1s infinite;
         }
 
         .loading-dots span:nth-child(2) {
-            animation-delay: 0.5s;
+            animation-delay: 0.2s;
         }
 
         .loading-dots span:nth-child(3) {
-            animation-delay: 1s;
+            animation-delay: 0.4s;
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 0.3;
-            }
-            50% {
-                opacity: 1;
-            }
+        @keyframes loading {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>

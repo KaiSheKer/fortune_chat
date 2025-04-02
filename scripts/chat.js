@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
         message.id = id;
         message.innerHTML = `
             <div class="message-content">
-                <div class="loading-text">正在推算命盘...</div>
+                <div class="loading-text">正在推算命盘</div>
                 <div class="loading-dots">
                     <span></span>
                     <span></span>
