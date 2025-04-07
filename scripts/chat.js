@@ -5,27 +5,89 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatInput = document.getElementById('chat-input');
     const sendButton = document.getElementById('send-button');
 
-    // 添加欢迎消息
-    addMessage('敢问缘主生于何年何月何日何时？天干地支定位，五行流转方显真机。', 'ai');
-
-    // 自动调整输入框高度
-    chatInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-        sendButton.disabled = this.value.trim() === '';
-    });
-
-    // 处理预设提示的点击
-    document.querySelectorAll('.example-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const prompt = this.dataset.prompt;
-            chatInput.value = prompt;
-            chatInput.style.height = 'auto';
-            chatInput.style.height = (chatInput.scrollHeight) + 'px';
-            sendButton.disabled = false;
-            chatInput.focus();
+    // 从本地存储加载历史记录
+    function loadHistory() {
+        const history = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+        history.forEach(item => {
+            addMessage(item.text, item.sender, false);
         });
-    });
+    }
+
+    // 保存消息到历史记录
+    function saveToHistory(text, sender) {
+        const history = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+        history.push({ text, sender, timestamp: Date.now() });
+        localStorage.setItem('chatHistory', JSON.stringify(history));
+    }
+
+    // 添加消息到聊天区域
+    function addMessage(text, sender, save = true) {
+        const message = document.createElement('div');
+        message.className = `message ${sender}`;
+        message.innerHTML = `<div class="message-content">${formatText(text)}</div>`;
+        chatMessages.appendChild(message);
+        requestAnimationFrame(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        // 只有新消息才保存到历史记录
+        if (save) {
+            saveToHistory(text, sender);
+        }
+    }
+
+    // 添加思考中的消息
+    function addThinkingMessage() {
+        const id = Date.now().toString();
+        const message = document.createElement('div');
+        message.className = 'message ai';
+        message.id = id;
+        message.innerHTML = `
+            <div class="message-content">
+                <div class="loading-text">正在推算命盘</div>
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>`;
+        chatMessages.appendChild(message);
+        requestAnimationFrame(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+        return id;
+    }
+
+    // 更新思考中的消息
+    function updateThinkingMessage(id, text) {
+        const message = document.getElementById(id);
+        if (message) {
+            const formattedText = formatText(text);
+            message.innerHTML = `<div class="message-content">${formattedText}</div>`;
+            requestAnimationFrame(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+    }
+
+    // 格式化文本
+    function formatText(text) {
+        if (!text) return '';
+        
+        // 处理换行
+        text = text.replace(/\n\n+/g, '\n\n'); // 将多个连续换行减少为两个
+        
+        // 处理 Markdown 样式
+        text = text
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // 粗体
+            .replace(/\*(.+?)\*/g, '<em>$1</em>') // 斜体
+            .replace(/^### (.+)$/gm, '<h3>$1</h3>') // h3
+            .replace(/^## (.+)$/gm, '<h2>$1</h2>') // h2
+            .replace(/^# (.+)$/gm, '<h1>$1</h1>') // h1
+            .replace(/\n/g, '<br>'); // 换行
+        
+        return text;
+    }
 
     // 发送消息
     async function sendMessage() {
@@ -34,15 +96,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 添加用户消息
         addMessage(message, 'user');
+
+        // 清空输入框
         chatInput.value = '';
         chatInput.style.height = 'auto';
         sendButton.disabled = true;
 
-        // 添加思考中的消息
-        const thinkingId = addThinkingMessage();
-
         try {
-            console.log('Sending request to:', CONFIG.apiEndpoint + '/chat/completions');
+            // 添加思考中的消息
+            const thinkingId = addThinkingMessage();
+
+            // 发送请求到 API
             const requestBody = {
                 model: "deepseek-chat",
                 messages: [
@@ -88,6 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 const reply = data.choices[0].message.content;
                 updateThinkingMessage(thinkingId, reply);
+                saveToHistory(reply, 'ai');
             } catch (error) {
                 console.error('解析响应失败:', error);
                 updateThinkingMessage(thinkingId, `错误: 无法解析API响应 - ${error.message}`);
@@ -99,62 +164,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 格式化文本
-    function formatText(text) {
-        return text
-            .replace(/\n\n/g, '<br><br>') // 双换行转为段落
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // 加粗
-            .replace(/\*(.*?)\*/g, '<em>$1</em>') // 斜体
-            .replace(/# (.*?)\n/g, '<h2>$1</h2>') // 标题
-            .replace(/## (.*?)\n/g, '<h3>$1</h3>') // 二级标题
-            .replace(/### (.*?)\n/g, '<h4>$1</h4>') // 三级标题
-            .replace(/\n/g, '<br>'); // 单换行
-    }
+    // 自动调整输入框高度
+    chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        sendButton.disabled = this.value.trim() === '';
+    });
 
-    // 添加消息到聊天区域
-    function addMessage(text, sender) {
-        const message = document.createElement('div');
-        message.className = `message ${sender}`;
-        message.innerHTML = `<div class="message-content">${formatText(text)}</div>`;
-        chatMessages.appendChild(message);
-        requestAnimationFrame(() => {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+    // 处理预设提示的点击
+    document.querySelectorAll('.example-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const prompt = this.dataset.prompt;
+            chatInput.value = prompt;
+            chatInput.style.height = 'auto';
+            chatInput.style.height = (chatInput.scrollHeight) + 'px';
+            sendButton.disabled = false;
+            chatInput.focus();
         });
-    }
-
-    // 添加思考中的消息
-    function addThinkingMessage() {
-        const id = Date.now().toString();
-        const message = document.createElement('div');
-        message.className = 'message ai';
-        message.id = id;
-        message.innerHTML = `
-            <div class="message-content">
-                <div class="loading-text">正在推算命盘</div>
-                <div class="loading-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            </div>`;
-        chatMessages.appendChild(message);
-        requestAnimationFrame(() => {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        });
-        return id;
-    }
-
-    // 更新思考中的消息
-    function updateThinkingMessage(id, text) {
-        const message = document.getElementById(id);
-        if (message) {
-            const formattedText = formatText(text);
-            message.innerHTML = `<div class="message-content">${formattedText}</div>`;
-            requestAnimationFrame(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            });
-        }
-    }
+    });
 
     // 发送按钮点击事件
     sendButton.addEventListener('click', sendMessage);
@@ -167,4 +194,11 @@ document.addEventListener('DOMContentLoaded', function() {
             sendMessage();
         }
     });
+
+    // 添加欢迎消息
+    if (!localStorage.getItem('chatHistory')) {
+        addMessage('敢问缘主生于何年何月何日何时？天干地支定位，五行流转方显真机。', 'ai');
+    } else {
+        loadHistory();
+    }
 });
